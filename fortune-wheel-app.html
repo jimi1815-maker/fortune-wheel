@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="幸運轉盤">
+    <title>🎯 幸運轉盤</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎯</text></svg>">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background-color: #F7F6F3;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid #E6E4DF;
+            padding: 32px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #37352F;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            background: transparent;
+            color: #6B6B6B;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-family: inherit;
+        }
+
+        button:hover {
+            background-color: #F7F6F3;
+        }
+
+        button:disabled {
+            background-color: #E6E4DF;
+            color: #9B9A97;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background-color: #37352F !important;
+            color: white !important;
+            padding: 12px 32px;
+            font-size: 16px;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background-color: #2F2E2A !important;
+        }
+
+        .canvas-container {
+            background-color: #FAFAF9;
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid #E6E4DF;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: center;
+        }
+
+        canvas {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .center-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .result-box {
+            width: 100%;
+            max-width: 500px;
+            margin-top: 24px;
+            background-color: #F7F6F3;
+            border: 1px solid #E6E4DF;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .result-label {
+            font-size: 14px;
+            color: #6B6B6B;
+            margin-bottom: 4px;
+        }
+
+        .result-text {
+            font-size: 24px;
+            font-weight: 600;
+            color: #37352F;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.2);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: 1px solid #E6E4DF;
+            padding: 32px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: 600;
+            color: #37352F;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #E6E4DF;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #37352F;
+            background: white;
+            font-family: inherit;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #37352F;
+        }
+
+        .btn-delete {
+            padding: 10px;
+            color: #6B6B6B;
+        }
+
+        .btn-add {
+            width: 100%;
+            margin: 16px 0 24px 0;
+            background-color: #F7F6F3 !important;
+            color: #37352F !important;
+            border: 1px solid #E6E4DF !important;
+            font-weight: 500;
+        }
+
+        .btn-add:hover {
+            background-color: #EEEDE9 !important;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            background: white !important;
+            color: #6B6B6B !important;
+            border: 1px solid #E6E4DF !important;
+        }
+
+        .btn-save {
+            flex: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            canvas {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🎯 幸運轉盤</h1>
+                <div class="button-group">
+                    <button onclick="resetWheel()" title="重置轉盤">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M1 4v6h6M23 20v-6h-6"/>
+                            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                        </svg>
+                        重置
+                    </button>
+                    <button onclick="openSettings()" title="設定選項">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="3"/>
+                            <path d="M12 1v6m0 6v6m5.2-13.2l-4.2 4.2m0 6l4.2 4.2M1 12h6m6 0h6m-13.2 5.2l4.2-4.2m6 0l4.2 4.2"/>
+                        </svg>
+                        設定
+                    </button>
+                </div>
+            </div>
+
+            <div class="center-content">
+                <div class="canvas-container">
+                    <canvas id="wheelCanvas" width="450" height="450"></canvas>
+                </div>
+
+                <button id="spinBtn" class="btn-primary" onclick="spinWheel()">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 3v3m6.366-.366l-2.12 2.12M21 12h-3m.366 6.366l-2.12-2.12M12 21v-3m-6.366.366l2.12-2.12M3 12h3m-.366-6.366l2.12 2.12"/>
+                    </svg>
+                    開始轉動
+                </button>
+
+                <div id="resultBox" class="result-box hidden">
+                    <div class="result-label">🎉 抽中結果</div>
+                    <div class="result-text" id="resultText"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">設定轉盤選項</div>
+            <div id="itemsList"></div>
+            <button class="btn-add" onclick="addItem()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                新增選項
+            </button>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeSettings()">取消</button>
+                <button class="btn-primary btn-save" onclick="saveSettings()">儲存</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let items = ['選項 1', '選項 2', '選項 3', '選項 4'];
+        let editingItems = [];
+        let rotation = 0;
+        let isSpinning = false;
+
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // 載入儲存的資料
+        function loadData() {
+            const saved = localStorage.getItem('wheel-items');
+            if (saved) {
+                try {
+                    items = JSON.parse(saved);
+                } catch (e) {
+                    console.log('載入失敗，使用預設值');
+                }
+            }
+            drawWheel();
+        }
+
+        // 儲存資料
+        function saveData() {
+            localStorage.setItem('wheel-items', JSON.stringify(items));
+        }
+
+        // 繪製輪盤
+        function drawWheel() {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 10;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate((rotation * Math.PI) / 180);
+            ctx.translate(-centerX, -centerY);
+
+            const colors = [
+                '#E8D5C4', '#D4E8E4', '#E5D4E8', '#F5E6D3',
+                '#D4E3F5', '#E8E4D4', '#F0D4D8', '#D4F5E3',
+                '#E8D4F0', '#D4E0F5', '#F5EBD4', '#D8E8D4'
+            ];
+
+            const anglePerItem = 360 / items.length;
+
+            items.forEach((item, index) => {
+                const startAngle = (index * anglePerItem * Math.PI) / 180;
+                const endAngle = ((index + 1) * anglePerItem * Math.PI) / 180;
+
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = colors[index % colors.length];
+                ctx.fill();
+                ctx.strokeStyle = '#E6E4DF';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + (endAngle - startAngle) / 2);
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#37352F';
+                ctx.font = '15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+                ctx.fillText(item, radius * 0.65, 5);
+                ctx.restore();
+            });
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 30, 0, 2 * Math.PI);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fill();
+            ctx.strokeStyle = '#E6E4DF';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+
+            ctx.beginPath();
+            ctx.moveTo(centerX, 10);
+            ctx.lineTo(centerX - 12, 35);
+            ctx.lineTo(centerX + 12, 35);
+            ctx.closePath();
+            ctx.fillStyle = '#37352F';
+            ctx.fill();
+        }
+
+        // 轉動輪盤
+        function spinWheel() {
+            if (isSpinning) return;
+
+            isSpinning = true;
+            document.getElementById('spinBtn').disabled = true;
+            document.getElementById('spinBtn').textContent = '轉動中...';
+            document.getElementById('resultBox').classList.add('hidden');
+
+            const spins = 5 + Math.random() * 3;
+            const randomDegree = Math.random() * 360;
+            const totalRotation = spins * 360 + randomDegree;
+
+            const startTime = Date.now();
+            const duration = 4000;
+            const startRotation = rotation;
+
+            function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+
+                const easeOut = 1 - Math.pow(1 - progress, 3);
+                rotation = startRotation + totalRotation * easeOut;
+
+                drawWheel();
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    const finalAngle = rotation % 360;
+                    const anglePerItem = 360 / items.length;
+                    const adjustedAngle = (270 - finalAngle + 360) % 360;
+                    const selectedIndex = Math.floor(adjustedAngle / anglePerItem);
+                    
+                    showResult(items[selectedIndex]);
+                    isSpinning = false;
+                    document.getElementById('spinBtn').disabled = false;
+                    document.getElementById('spinBtn').innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v3m6.366-.366l-2.12 2.12M21 12h-3m.366 6.366l-2.12-2.12M12 21v-3m-6.366.366l2.12-2.12M3 12h3m-.366-6.366l2.12 2.12"/></svg>開始轉動';
+                }
+            }
+
+            animate();
+        }
+
+        // 顯示結果
+        function showResult(result) {
+            document.getElementById('resultText').textContent = result;
+            document.getElementById('resultBox').classList.remove('hidden');
+        }
+
+        // 重置輪盤
+        function resetWheel() {
+            rotation = 0;
+            document.getElementById('resultBox').classList.add('hidden');
+            drawWheel();
+        }
+
+        // 開啟設定
+        function openSettings() {
+            editingItems = [...items];
+            renderItemsList();
+            document.getElementById('modal').classList.add('active');
+        }
+
+        // 關閉設定
+        function closeSettings() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        // 儲存設定
+        function saveSettings() {
+            const validItems = editingItems.filter(item => item.trim());
+            if (validItems.length > 0) {
+                items = validItems;
+                saveData();
+                drawWheel();
+            }
+            closeSettings();
+        }
+
+        // 渲染項目列表
+        function renderItemsList() {
+            const listHtml = editingItems.map((item, index) => `
+                <div class="input-group">
+                    <input type="text" value="${item}" onchange="updateItem(${index}, this.value)" placeholder="選項 ${index + 1}">
+                    ${editingItems.length > 2 ? `
+                        <button class="btn-delete" onclick="removeItem(${index})">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                        </button>
+                    ` : ''}
+                </div>
+            `).join('');
+            document.getElementById('itemsList').innerHTML = listHtml;
+        }
+
+        // 新增項目
+        function addItem() {
+            editingItems.push(`選項 ${editingItems.length + 1}`);
+            renderItemsList();
+        }
+
+        // 移除項目
+        function removeItem(index) {
+            if (editingItems.length > 2) {
+                editingItems.splice(index, 1);
+                renderItemsList();
+            }
+        }
+
+        // 更新項目
+        function updateItem(index, value) {
+            editingItems[index] = value;
+        }
+
+        // 初始化
+        loadData();
+    </script>
+</body>
+</html>
